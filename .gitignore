@@ -1,0 +1,42 @@
+# Node modules
+/chatify/node_modules/
+/chatify-web/node_modules/
+
+# Build output
+/dist/
+/build/
+/out/
+
+# Dependency directories
+/.pnp/
+/.pnp.js
+
+# IDEs and editors configuration
+/.idea/
+/.vscode/
+/.sublime-project
+/.sublime-workspace
+
+# Logs
+*.log
+*.log.*
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# npm log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variable files (don't track .env files)
+.env
+.env.*.local
+.env.local
+
+# Firebase/Google Cloud functions
+/.firebase/
+
+# Exclude services directory
+/frontend/src/services
