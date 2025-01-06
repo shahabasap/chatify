@@ -3,19 +3,26 @@ import { Server, Socket } from "socket.io";
 import { IndividualChatRepository } from "../repositories/individualChatRepository";
 import { IndividualChatService } from "../services/IndividualChatService";
 import { IndividualChatModel } from "../models/IndividualChatModel";
+import { MessageService } from "../services/messageServices";
+import MessageRepository from "../repositories/messageRepository";
+import { MessageModel } from "../models/messageModel";
 
 const handleIndividualChatSocket = (io: Server) => {
   const chatRepository = new IndividualChatRepository(IndividualChatModel);
   const chatService = new IndividualChatService(chatRepository);
 
+  const messageRepository=new MessageRepository(MessageModel)
+  const messageService=new MessageService(messageRepository,chatRepository)
+
   io.on("connection", (socket: Socket) => {
-    console.log(`User connected: ${socket.id}`);
+   
 
     // Join individual chat room
-    socket.on("joinChat", async (data: { userId: string }, callback: Function) => {
+    socket.on("joinChat", async (data:{chatId:string}, callback: Function) => {
       try {
-        const { userId } = data;
-        const chats = await chatService.getIndividualChats(userId);
+        const{chatId}=data
+        socket.join(chatId);
+        const chats = await chatService.getChatById(chatId);
         callback({ status: 200, data: chats });
       } catch (error) {
         callback({ status: 500, error: "Failed to fetch chats" });
@@ -23,16 +30,22 @@ const handleIndividualChatSocket = (io: Server) => {
     });
 
     // Send a message
-    socket.on("sendMessage", async (data: { chatId: string; senderId: string; message: string }, callback: Function) => {
+    socket.on("sendMessage", async (data: { chatId: string; senderId: string; message: string,chatType:string }, callback: Function) => {
       try {
-        const { chatId, senderId, message } = data;
-
-        if (!chatId || !senderId || !message) {
+        const { chatId, senderId, message ,chatType} = data;
+  
+        if (!chatId || !senderId || !message || !chatType) {
           callback({ status: 400, error: "Invalid data provided for sending a message." });
           return;
         }
 
-        const chat = await chatService.createIndividualChat([chatId, senderId]);
+        const chat = await messageService.sendMessage({  
+          userId:senderId,
+          content:message,
+          chatId,
+          chatType,
+          })
+         
         io.to(chatId).emit("receiveMessage", chat);
         callback({ status: 200, message: "Message sent successfully." });
       } catch (error) {

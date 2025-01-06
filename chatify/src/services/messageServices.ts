@@ -19,13 +19,15 @@ export class MessageService implements IMessageService {
     content,
     chatId,
     chatType,
-    replyTo
+    replyTo,
+   
   }: {
     userId: string;
     content: string;
     chatId: string;
     chatType: string;
     replyTo?: string;
+   
   }) {
     const message = await this.messageRepository.createMessage({
       sender: userId,
@@ -34,6 +36,7 @@ export class MessageService implements IMessageService {
       chat: chatId,
       replyTo,
       readBy: [userId],
+
     });
 
     if (chatType === "individual") {

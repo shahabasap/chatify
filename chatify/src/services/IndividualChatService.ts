@@ -24,6 +24,11 @@ export class IndividualChatService implements IIndividualChatService {
 
     return this.chatRepository.createChat(participants);
   }
+  async getChatById(chatId: string): Promise<IIndividualChatSchema |null> {
+      
+    const chat = await this.chatRepository.getById(chatId);
+    return chat
+  }
 
   async getIndividualChats(userId: string): Promise<any[]> {
     const chats = await this.chatRepository.getChatsByUser(userId);

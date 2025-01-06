@@ -13,15 +13,9 @@ export class UserController {
   async searchUsers(req: Request, res: Response,next:NextFunction): Promise<void> {
     try {
    
-      console.log("uid",req.user)
+      const{user}=req
       const query = req.query.query as string; 
-      if (!query) {
-        res.status(400).json({ error: "Query parameter is required" });
-        return;
-      }
-
-
-      const users = await this.userService.searchUsers(query); // Call the service
+      const users = await this.userService.searchUsers(query,user.uid as string); // Call the service
       res.status(200).json({ users });
     } catch (error) {
       next(error)

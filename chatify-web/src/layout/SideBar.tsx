@@ -1,38 +1,41 @@
 import React, { useEffect, useState } from "react";
-import { motion } from "motion/react";
+import { motion } from "framer-motion";
 import { useDispatch, useSelector } from "react-redux";
 import { clearUserData, selectAuth } from "../redux/authSlice";
 import OnetoOneChat from "../api/OnetoOneChat";
 import useDebounce from "../hook/UseDebounce";
 import IUserType, { IChats } from "../types/user";
 
-const SideBar = () => {
+interface SideBarProps {
+  onChatSelect: (chatId: string) => void;
+}
+
+const SideBar: React.FC<SideBarProps> = ({ onChatSelect }) => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [users, setUsers] = useState<IUserType[] | []>([]);
-  const [chats, setChats] = useState<IChats[] | []>([]);
+  const [users, setUsers] = useState<IUserType[]>([]);
+  const [chats, setChats] = useState<IChats[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const debouncedSearchTerm = useDebounce(searchTerm, 1000);
+  const [activeChat, setActiveChat] = useState<string | null>(null);
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
   const dispatch = useDispatch();
   const { id } = useSelector(selectAuth);
+  const [displayList, setDisplayList] = useState<any[]>([]);
 
-  // Fetch all users when search is empty
   useEffect(() => {
     const fetchUsers = async () => {
+      if (!debouncedSearchTerm.trim()) {
+        setUsers([]);
+        return;
+      }
+      
       setIsLoading(true);
       try {
-        if (debouncedSearchTerm.trim()) {
-          const response = await OnetoOneChat.searchUser(debouncedSearchTerm);
-          setUsers(response.data.users || []);
-        } else {
-          // Fetch all users when search is empty
-          const response = await OnetoOneChat.searchUser("");
-          setUsers(response.data.users || []);
-        }
+        const response = await OnetoOneChat.searchUser(debouncedSearchTerm);
+        setUsers(response.data.users || []);
         setError(null);
       } catch (error) {
-        setError("Error fetching users. Please try again.");
-        console.error("Error fetching users:", error);
+        setError("Error fetching users");
         setUsers([]);
       } finally {
         setIsLoading(false);
@@ -42,50 +45,56 @@ const SideBar = () => {
     fetchUsers();
   }, [debouncedSearchTerm]);
 
-  // Fetch initial chats
   useEffect(() => {
-    const fetchInitialChats = async () => {
-      if (!id) {
-        setError("Please sign in to view your chats.");
-        return;
-      }
+    const fetchChats = async () => {
+      if (!id) return;
 
       setIsLoading(true);
       try {
         const response = await OnetoOneChat.getChats(id);
-       
-        setChats(response.data[0]);
+        setChats(response.data[0] || []);
         setError(null);
       } catch (error) {
-        setError("Couldn't load your chats. Please try again.");
-        console.error("Error fetching chats:", error);
+        setError("Couldn't load chats");
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchInitialChats();
+    fetchChats();
   }, [id]);
 
-  const createChat = async (receiverId: string) => {
-    if (!id) {
-      setError("Please sign in to start a chat.");
-      return;
-    }
+  useEffect(() => {
+    setDisplayList(searchTerm.trim() ? users : chats);
+  }, [searchTerm, users, chats]);
 
+  const handleChatSelection = async (receiverId: string) => {
+    if (!id) return;
+  
     try {
-      const response = await OnetoOneChat.createChat([receiverId, id]);
-      // Refresh chats after creating a new one
-      const updatedChats = await OnetoOneChat.getChats(id);
-      setChats(updatedChats.data);
-      setError(null);
+      let chatId;
+      if (searchTerm.trim()) {
+        // Creating new chat
+        const response = await OnetoOneChat.createChat([receiverId, id]);
+        chatId = response.data._id;
+        const updatedChats = await OnetoOneChat.getChats(id);
+        setChats(updatedChats.data[0] || []);
+      } else {
+        // For existing chats, we need to find the chat ID from the chat object
+        const chat = chats.find(chat => chat.user._id === receiverId);
+        chatId = chat?.chatId;
+      }
+  
+      if (chatId) {
+        setActiveChat(chatId);
+        onChatSelect(chatId);
+        setSearchTerm("");
+      }
     } catch (error) {
-      setError("Couldn't create chat. Please try again.");
-      console.error("Error creating chat:", error);
+      setError("Couldn't create/select chat");
     }
   };
-
-  const renderUserList = () => {
+  const renderList = () => {
     if (isLoading) {
       return <div className="text-center text-gray-400">Loading...</div>;
     }
@@ -104,8 +113,6 @@ const SideBar = () => {
       );
     }
 
-    const displayList = searchTerm.trim() ? users : chats;
-    
     if (!displayList.length) {
       return (
         <div className="text-center text-gray-400">
@@ -116,27 +123,33 @@ const SideBar = () => {
 
     return displayList.map((item: IUserType | IChats, index: number) => {
       const user = 'user' in item ? item.user : item;
-         
+      const itemId = user._id
+      const isActive = itemId === activeChat;
+
       return (
         <motion.div
           key={index}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="relative flex justify-items-start gap-2 items-center p-4 bg-gray-700 rounded-lg hover:bg-gray-600 cursor-pointer"
-          onClick={() => searchTerm.trim() && createChat(user._id)}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          className={`relative flex items-center p-4 rounded-lg cursor-pointer ${
+            isActive ? 'bg-gray-600' : 'bg-gray-700 hover:bg-gray-600'
+          }`}
+          onClick={() => handleChatSelection(itemId)}
         >
           <img
             src="https://images.vexels.com/content/145908/preview/male-avatar-maker-2a7919.png"
-            alt="profile-pic"
+            alt="profile"
             className="w-8 h-8 rounded-full"
           />
-          <div className="flex flex-col">
-            <span className="font-medium">{user.name}</span>
+          <div className="ml-3 flex-1 min-w-0">
+            <p className="font-medium truncate">{user.name}</p>
             {user.bio && (
-              <span className="text-sm text-gray-400">{user.bio}</span>
+              <p className="text-sm text-gray-400 truncate">{user.bio}</p>
             )}
           </div>
-          <div className="absolute top-1 right-1 bg-green-300 flex items-center justify-center h-5 w-5 rounded-full"></div>
+          {!searchTerm.trim() && (
+            <div className="absolute top-1 right-1 bg-green-300 h-5 w-5 rounded-full" />
+          )}
         </motion.div>
       );
     });
@@ -144,14 +157,14 @@ const SideBar = () => {
 
   return (
     <div className="w-1/5 min-h-screen">
-      <div className="relative w-full h-full flex flex-col bg-gray-800 text-white">
+      <div className="relative h-full flex flex-col bg-gray-800 text-white">
         <motion.div className="flex w-full p-8">
-          <span className="bg-gradient-to-r from-green-200 bg-green-500 to-green-700 bg-clip-text text-transparent text-4xl font-bold tracking-tight">
+          <span className="bg-gradient-to-r from-green-200 via-green-500 to-green-700 bg-clip-text text-transparent text-4xl font-bold">
             CHATIFY
           </span>
         </motion.div>
 
-        <div className="relative w-full px-4 pb-4">
+        <div className="px-4 pb-4">
           <input
             type="text"
             value={searchTerm}
@@ -161,16 +174,18 @@ const SideBar = () => {
           />
         </div>
 
-        <div className="relative flex flex-col w-full p-4 gap-4 overflow-y-auto">
-          {renderUserList()}
+        <div className="flex-1 p-4 space-y-4 overflow-y-auto">
+          {renderList()}
         </div>
 
-        <div
-          className="fixed bottom-4 left-4 flex justify-items-start gap-2 items-center p-4 bg-gray-700 rounded-lg hover:bg-gray-600 cursor-pointer"
+        <motion.div
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="m-4 p-4 bg-gray-700 rounded-lg hover:bg-gray-600 cursor-pointer"
           onClick={() => dispatch(clearUserData())}
         >
           Sign Out
-        </div>
+        </motion.div>
       </div>
     </div>
   );

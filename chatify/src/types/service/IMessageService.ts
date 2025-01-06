@@ -6,6 +6,7 @@ export interface IMessageService {
       chatId: string;
       chatType: string;
       replyTo?: string;
+      timestamp:string
     }): Promise<any>;
   }
   

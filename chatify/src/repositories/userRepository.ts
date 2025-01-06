@@ -19,14 +19,15 @@ class UserRepository implements IUserRepository {
     }
     return this.model.create({ uid,phoneNo,name });
   }
-  async search(query: string): Promise<IUserSchema[]> {
+  async search(query: string,uid:string): Promise<IUserSchema[]> {
     if (!query.trim()) {
      
-      return this.model.find().exec();
+      return this.model.find({uid:{$ne:uid}}).exec();
     }
   
  
     return this.model.find({
+      uid:{$ne:uid},
       name: { $regex: query, $options: "i" },
     }).exec();
   }

@@ -15,7 +15,7 @@ export class MessageController {
       //   throw new Error("User is unauthorized");
       // }
 
-      const { content, chatId, chatType, replyTo,userId } = req.body;
+      const { content, chatId, chatType, replyTo,userId ,timestamp} = req.body;
 
       const populatedMessage = await this.messageService.sendMessage({
         userId,
@@ -23,6 +23,7 @@ export class MessageController {
         chatId,
         chatType,
         replyTo,
+        timestamp
       });
 
       res.status(201).json(populatedMessage);

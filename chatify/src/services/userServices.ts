@@ -22,9 +22,9 @@ export class UserService implements IUserService{
     }
   }
   // Search users by name (or extend for other criteria like email, etc.)
-  async searchUsers(query: string): Promise<IuserSchema[]> {
+  async searchUsers(query: string,uid:string): Promise<IuserSchema[]> {
     try {
-      return await this.userRepository.search(query);
+      return await this.userRepository.search(query,uid);
     } catch (error) {
       throw new Error("Error searching users");
     }

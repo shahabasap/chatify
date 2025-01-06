@@ -8,6 +8,7 @@ export interface IIndividualChatService {
   getIndividualChats(userId: string): Promise<IIndividualChatSchema[]>;
   updateLastMessage(chatId: string, messageId: string): Promise<IIndividualChatSchema | null>;
   blockChat(chatId: string, blockedBy: string): Promise<IIndividualChatSchema | null>;
+  getChatById(chatId: string): Promise<IIndividualChatSchema | null>;
 }
 
 export default  IIndividualChatService

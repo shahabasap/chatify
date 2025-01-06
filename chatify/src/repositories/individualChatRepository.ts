@@ -17,7 +17,15 @@ export class IndividualChatRepository implements IIndividualChatRepository {
   async findChatByParticipants(participants: string[]): Promise<IIndividualChatSchema | null> {
     const chat = await this.model.findOne({ participants: { $all: participants } })
       .populate("participants")
-      .populate("lastMessage");
+      .populate("lastMessage")
+      
+    return chat;
+  }
+  async getById(chatId: string): Promise<IIndividualChatSchema | null> {
+    const chat = await this.model.findById(chatId)
+      .populate("participants")
+      .populate("lastMessage")
+      .populate("messages")
     return chat;
   }
 
@@ -25,6 +33,7 @@ export class IndividualChatRepository implements IIndividualChatRepository {
     const chats = await this.model.find({ participants: new mongoose.Types.ObjectId(userId) })
       .populate("participants")
       .populate("lastMessage")
+      .populate("messages")
     return chats;
   }
 

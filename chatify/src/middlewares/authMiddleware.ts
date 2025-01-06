@@ -11,7 +11,8 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
 
   try {
     const decodedToken = await admin.auth().verifyIdToken(token)
-    res.locals.user = decodedToken;
+    console.log("decode",decodedToken)
+    req.user = decodedToken;
     next();
   } catch (error) {
     res.status(401).json({ message: "Invalid token" });
