@@ -1,5 +1,5 @@
 // repositories/IndividualChatRepository.ts
-import { Model } from "mongoose";
+import mongoose, { Model } from "mongoose";
 import { IIndividualChatRepository } from "../types/repository/IIndividualChatRepository";
 import   IIndividualChatSchema  from "../types/schema/IIndividualChatSchema";
 
@@ -21,17 +21,17 @@ export class IndividualChatRepository implements IIndividualChatRepository {
     return chat;
   }
 
-  async getChatsByUser(userId: string): Promise<IIndividualChatSchema[]> {
-    const chats = await this.model.find({ participants: userId })
+  async getChatsByUser(userId: string): Promise<any[]> {
+    const chats = await this.model.find({ participants: new mongoose.Types.ObjectId(userId) })
       .populate("participants")
-      .populate("lastMessage");
+      .populate("lastMessage")
     return chats;
   }
 
   async updateLastMessage(chatId: string, messageId: string): Promise<IIndividualChatSchema | null> {
     const chat = await this.model.findByIdAndUpdate(
       chatId,
-      { lastMessage: messageId },
+      { $set: { lastMessage: messageId }, $push: { messages: messageId } },
       { new: true }
     );
     return chat;

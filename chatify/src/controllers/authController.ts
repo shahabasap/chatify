@@ -10,10 +10,11 @@ class AuthController {
   }
 
  async createUser(req: Request, res: Response) {
-    const { uid } = req.body;
+    const { uid,phoneNo,name } = req.body;
+  
 
     try {
-      const user = await this.userService.createUser(uid)
+      const user = await this.userService.createUser(uid,phoneNo,name)
     
       res.status(200).json(user);
     } catch (error) {

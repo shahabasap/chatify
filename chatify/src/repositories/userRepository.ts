@@ -11,21 +11,39 @@ class UserRepository implements IUserRepository {
   }
 
  
-  async createUser(uid: string): Promise<IUserSchema> {
-    const existingUser = await this.model.findOne({ uid });
+  async createUser(uid: string,phoneNo:string,name:string): Promise<IUserSchema> {
+  
+    const existingUser = await this.model.findOne({ phoneNo });
     if (existingUser) {
       return existingUser
     }
-    return this.model.create({ uid });
+    return this.model.create({ uid,phoneNo,name });
   }
   async search(query: string): Promise<IUserSchema[]> {
-    // Search users by name (you can extend this query to email or other fields)
+    if (!query.trim()) {
+     
+      return this.model.find().exec();
+    }
+  
+ 
     return this.model.find({
-      name: { $regex: query, $options: "i" }, // Case-insensitive search
+      name: { $regex: query, $options: "i" },
     }).exec();
   }
+  async updateUserProfile(userId:string,name:string,bio:string): Promise<IUserSchema> {
+   
+    const updatedUser = await this.model.findByIdAndUpdate(
+      userId,
+      { $set: { name, bio } },
+      { new: true } // Return the updated document
+    )
+    if (!updatedUser) {
+      throw new Error("User not found or update failed.");
+    }
 
+    return updatedUser;
 
+}
 }
 
 export default UserRepository;

@@ -8,11 +8,12 @@ import { setUserData } from "../redux/authSlice";
 
 // Define the props type for the component
 interface OtpVerificationPageProps {
-  confirmationResult: ConfirmationResult; // Adjust according to Firebase version
+  confirmationResult: ConfirmationResult; 
+  name:string | null
 }
 
 const OtpVerificationPage: React.FC<OtpVerificationPageProps> = ({
-  confirmationResult,
+  confirmationResult,name
 }) => {
   const [otp, setOtp] = useState<string>("");
   const [error, setError] = useState<string>("");
@@ -21,35 +22,43 @@ const OtpVerificationPage: React.FC<OtpVerificationPageProps> = ({
 
   const verifyOtp = async () => {
     setError("");
-
+  
     if (!otp || otp.length < 6) {
       setError("Please enter a valid OTP.");
       return;
     }
-
+  
     try {
-      // Confirm the OTP with the confirmationResult
+     
       const result = await confirmationResult.confirm(otp);
-      console.log("User signed in successfully:", result.user);
-
-      // Get the token and dispatch to Redux
+  
+  
       const token = await result.user.getIdToken();
-      const user = await UserApi.createUser(result.user.uid)
-       const name="martin"
-
-       if (user.status==200) {
-        dispatch(setUserData({token,name,id:user.data._id}));
-
-        // Navigate to the dashboard or another page
+  
+  
+      const payload = {
+        uid: result.user.uid,
+        phoneNo: result.user.phoneNumber, 
+        name: name, 
+      };
+       console.log("payload",payload)
+  
+      const user = await UserApi.createUser(payload);
+  
+    
+      if (user.status === 200) {
+        dispatch(setUserData({ token, name, id: user.data._id }));
+  
         navigate("/dashboard");
-        
-       }
-
+      } else {
+        setError("Failed to create user. Please try again.");
+      }
     } catch (error) {
       console.error("Error verifying OTP:", error);
       setError("Invalid OTP. Please try again.");
     }
   };
+  
 
   return (
     <div className="flex items-center justify-center w-full min-h-screen bg-gray-900">

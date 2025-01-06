@@ -20,7 +20,7 @@ const messageController=new MessageController(messageService)
 
 
 router.post("/chats", chatController.createIndividualChat.bind(chatController));
-router.get("/chats", chatController.getIndividualChats.bind(chatController));
+router.get("/chats/:userId", chatController.getIndividualChats.bind(chatController));
 // router.get("/chats/:chatId", chatController.updateChat.bind(chatController));
 router.patch("/chats/:chatId/block", chatController.blockChat.bind(chatController));
 

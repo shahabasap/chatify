@@ -6,14 +6,15 @@ import { ConfirmationResult } from 'firebase/auth';
 const LoginPage: React.FC = () => {
 
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
+  const [name, setName] = useState<string | null>(null)
 
   return (
     <div>
   
       {!confirmationResult ? (
-        <Login setConfirmationResult={setConfirmationResult} />
+        <Login setConfirmationResult={setConfirmationResult} setName={setName} />
       ) : (
-        <OtpVerificationPage confirmationResult={confirmationResult} />
+        <OtpVerificationPage confirmationResult={confirmationResult} name={name} />
       )}
     </div>
   );

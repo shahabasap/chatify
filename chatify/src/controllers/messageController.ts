@@ -11,12 +11,11 @@ export class MessageController {
 
   async sendMessage(req: Request, res: Response,next:NextFunction) {
     try {
-      if (!req.user) {
-        throw new Error("User is unauthorized");
-      }
+      // if (!req.user) {
+      //   throw new Error("User is unauthorized");
+      // }
 
-      const { content, chatId, chatType, replyTo } = req.body;
-      const userId = req.user.id;
+      const { content, chatId, chatType, replyTo,userId } = req.body;
 
       const populatedMessage = await this.messageService.sendMessage({
         userId,

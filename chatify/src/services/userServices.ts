@@ -11,10 +11,10 @@ export class UserService implements IUserService{
     this.userRepository = userRepository;
   }
 
-  async createUser(uid: string): Promise<IuserSchema> {
+  async createUser(uid: string,phoneNo:string,name:string): Promise<IuserSchema> {
     try {
       const user = this.userRepository.createUser(
-        uid
+        uid,phoneNo,name
        );
       return user;
     } catch (error) {
@@ -25,6 +25,13 @@ export class UserService implements IUserService{
   async searchUsers(query: string): Promise<IuserSchema[]> {
     try {
       return await this.userRepository.search(query);
+    } catch (error) {
+      throw new Error("Error searching users");
+    }
+  }
+  async updateProfile(userId:string,name:string,bio:string): Promise<IuserSchema> {
+    try {
+      return await this.userRepository.updateUserProfile(userId,name,bio);
     } catch (error) {
       throw new Error("Error searching users");
     }

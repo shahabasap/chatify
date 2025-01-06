@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
-import admin from "firebase-admin";
+import admin from "../config/firebase/firebaseConfig"
+
 
 export const authMiddleware = async (req: Request, res: Response, next: NextFunction) => {
   const token = req.headers.authorization?.split(" ")[1];
@@ -9,8 +10,8 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
   }
 
   try {
-    const decodedToken = await admin.auth().verifyIdToken(token);
-    res.locals.user = decodedToken; // Attach user info to the request
+    const decodedToken = await admin.auth().verifyIdToken(token)
+    res.locals.user = decodedToken;
     next();
   } catch (error) {
     res.status(401).json({ message: "Invalid token" });

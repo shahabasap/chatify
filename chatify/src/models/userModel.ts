@@ -7,6 +7,7 @@ const userSchema = new Schema<IUserSchema>({
   uid: { type: String, required: true },
   name: { type: String, required: true },  
   bio: { type: String, default: "" },      
+  phoneNo: { type: String, required:true},      
 });
 
 export const userModel = model<IUserSchema>("User", userSchema);

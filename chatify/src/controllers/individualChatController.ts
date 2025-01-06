@@ -27,12 +27,7 @@ export class IndividualChatController {
 
   async getIndividualChats(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const userId = req.user?.id; // Assuming authentication middleware adds `req.user`
-
-      if (!userId) {
-        res.status(401).json({ error: "Unauthorized" });
-        return;
-      }
+    const {userId}=req.params
 
       const chats = await this.chatService.getIndividualChats(userId);
       res.status(200).json(chats);

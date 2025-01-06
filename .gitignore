@@ -6,7 +6,7 @@
 /dist/
 /build/
 /out/
-
+chatify/src/config/firebase/serviceAccount.json
 # Dependency directories
 /.pnp/
 /.pnp.js

@@ -12,41 +12,47 @@ declare global {
   }
 }
 
-
 interface LoginProps {
-  setConfirmationResult: (result: ConfirmationResult) => void; // Type for the confirmation result
+  setConfirmationResult: (result: ConfirmationResult) => void;
+  setName: (name: string) => void;
 }
 
-const Login: React.FC<LoginProps> = ({ setConfirmationResult }) => {
-  const [value, setValue] = useState<string>("");  // Phone number state, typed as string
-  const [error, setError] = useState<string>("");  // Error state, typed as string
+const Login: React.FC<LoginProps> = ({ setConfirmationResult, setName }) => {
+  const [value, setValue] = useState<string>(""); // Phone number state, typed as string
+  const [name, setNameValue] = useState<string>(""); // Name state
+  const [error, setError] = useState<string>(""); // Error state, typed as string
 
   const sendOtp = async () => {
     setError(""); // Reset error on each OTP request
 
-    // Validate the phone number
+    // Validate the inputs
+    if (!name.trim()) {
+      setError("Please enter your name.");
+      return;
+    }
     if (!value) {
       setError("Please enter a valid phone number.");
       return;
     }
+    console.log("Name:", name);
     console.log("Phone Number:", value);
 
     try {
       const auth = getAuth(app);
 
       // Set up reCAPTCHA verifier
-      window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-        size: 'invisible',
-        callback: (response:any) => {
-          console.log('reCAPTCHA solved, OTP sending in progress...');
+      window.recaptchaVerifier = new RecaptchaVerifier(auth, "recaptcha-container", {
+        size: "invisible",
+        callback: (response: any) => {
+          console.log("reCAPTCHA solved, OTP sending in progress...");
         },
       });
 
       // Send OTP with the properly formatted phone number
       const result = await signInWithPhoneNumber(auth, `+${value}`, window.recaptchaVerifier);
-      setConfirmationResult(result);  // Pass the result to the parent component for further handling
-      
-    } catch (error: any) {  // Add error typing
+      setConfirmationResult(result); // Pass the result to the parent component for further handling
+      setName(name); // Pass the name to the parent component
+    } catch (error: any) {
       if (error.code === "auth/invalid-phone-number") {
         setError("The phone number is not valid. Please enter a valid phone number.");
       } else {
@@ -63,6 +69,15 @@ const Login: React.FC<LoginProps> = ({ setConfirmationResult }) => {
           <div className="flex flex-col items-center w-full h-full p-7">
             <div className="text-3xl font-bold mt-4">Login here</div>
             <div className="flex flex-col w-full mt-8 items-center gap-4">
+              <motion.input
+                 whileHover={{ scale: 1.1 }}
+                 whileTap={{ scale: 0.95 }}
+                type="text"
+                placeholder="Enter your name"
+                value={name}
+                onChange={(e) => setNameValue(e.target.value)}
+                className="w-full px-4 py-2 text-lg text-white bg-gray-900 rounded-lg focus:outline-none ring-2 ring-green-300"
+              />
               <PhoneInput
                 country="us"
                 value={value}

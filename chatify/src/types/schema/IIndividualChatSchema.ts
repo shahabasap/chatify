@@ -2,7 +2,7 @@
 import { Types, Document } from "mongoose";
 
 export default interface IIndividualChatSchema extends Document {
-  participants: Types.ObjectId[];
+  participants: Types.ObjectId[] ;
   messages: Types.ObjectId[];
   lastMessage?: Types.ObjectId;
   isBlocked: boolean;
