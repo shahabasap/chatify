@@ -30,10 +30,12 @@ export class IndividualChatRepository implements IIndividualChatRepository {
   }
 
   async getChatsByUser(userId: string): Promise<any[]> {
-    const chats = await this.model.find({ participants: new mongoose.Types.ObjectId(userId) })
+    const chats = await this.model.find({ participants: {$in:[userId]} })
       .populate("participants")
       .populate("lastMessage")
-      .populate("messages")
+      .populate("messages").exec()
+     
+    
     return chats;
   }
 
@@ -42,7 +44,9 @@ export class IndividualChatRepository implements IIndividualChatRepository {
       chatId,
       { $set: { lastMessage: messageId }, $push: { messages: messageId } },
       { new: true }
-    );
+    ).exec()
+
+   
     return chat;
   }
 

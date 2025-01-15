@@ -20,31 +20,58 @@ export class MessageService implements IMessageService {
     chatId,
     chatType,
     replyTo,
-   
   }: {
     userId: string;
     content: string;
     chatId: string;
     chatType: string;
     replyTo?: string;
-   
   }) {
-    const message = await this.messageRepository.createMessage({
-      sender: userId,
-      content,
-      chatType,
-      chat: chatId,
-      replyTo,
-      readBy: [userId],
-
-    });
-
-    if (chatType === "individual") {
-      await this.individualChatRepository.updateLastMessage(chatId, message._id as string);
-    } else {
-    //   await this.groupChatRepository.updateLastMessage(chatId, message._id);
+    try {
+      // Create the message
+      const message = await this.messageRepository.createMessage({
+        senderId: userId,
+        content,
+        chatType,
+        chat: chatId,
+        replyTo,
+        readBy: [userId],
+      });
+  
+      if (!message) {
+        throw new Error("Failed to create the message.");
+      }
+  
+      // Update the last message in the respective chat
+      if (chatType === "individual") {
+        const updateResult = await this.individualChatRepository.updateLastMessage(
+          chatId,
+          message._id as string
+        );
+  
+        if (!updateResult) {
+          throw new Error("Failed to update the last message in the individual chat.");
+        }
+      } else {
+        // Uncomment and implement for group chat when ready
+        // const updateResult = await this.groupChatRepository.updateLastMessage(chatId, message._id);
+        // if (!updateResult) {
+        //   throw new Error("Failed to update the last message in the group chat.");
+        // }
+      }
+  
+      // Populate and return the created message
+      const populatedMessage = await this.messageRepository.populateMessage(message);
+  
+      if (!populatedMessage) {
+        throw new Error("Failed to populate the message.");
+      }
+  
+      return populatedMessage;
+    } catch (error) {
+      console.error("Error in sendMessage:", error);
+      throw new Error("An error occurred while sending the message. Please try again.");
     }
-
-    return this.messageRepository.populateMessage(message);
   }
+  
 }

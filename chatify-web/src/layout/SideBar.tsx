@@ -1,40 +1,45 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { useDispatch, useSelector } from "react-redux";
-import { clearUserData, selectAuth } from "../redux/authSlice";
+import { useDispatch } from "react-redux";
+import { clearUserData } from "../redux/authSlice";
 import OnetoOneChat from "../api/OnetoOneChat";
 import useDebounce from "../hook/UseDebounce";
 import IUserType, { IChats } from "../types/user";
 
 interface SideBarProps {
   onChatSelect: (chatId: string) => void;
+  userId: string | null; // Accepting userId as a prop
 }
 
-const SideBar: React.FC<SideBarProps> = ({ onChatSelect }) => {
+const SideBar: React.FC<SideBarProps> = ({userId, onChatSelect }) => {
+  const dispatch = useDispatch();
+
+  // State for managing input, chats, and users
   const [searchTerm, setSearchTerm] = useState("");
   const [users, setUsers] = useState<IUserType[]>([]);
   const [chats, setChats] = useState<IChats[]>([]);
+  const [activeChat, setActiveChat] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeChat, setActiveChat] = useState<string | null>(null);
-  const debouncedSearchTerm = useDebounce(searchTerm, 500);
-  const dispatch = useDispatch();
-  const { id } = useSelector(selectAuth);
   const [displayList, setDisplayList] = useState<any[]>([]);
 
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
+  // Fetch users on search input
   useEffect(() => {
     const fetchUsers = async () => {
       if (!debouncedSearchTerm.trim()) {
         setUsers([]);
         return;
       }
-      
+
       setIsLoading(true);
       try {
         const response = await OnetoOneChat.searchUser(debouncedSearchTerm);
         setUsers(response.data.users || []);
+        console.log("users",users)
         setError(null);
-      } catch (error) {
+      } catch {
         setError("Error fetching users");
         setUsers([]);
       } finally {
@@ -45,16 +50,18 @@ const SideBar: React.FC<SideBarProps> = ({ onChatSelect }) => {
     fetchUsers();
   }, [debouncedSearchTerm]);
 
+  // Fetch chats for the logged-in user
   useEffect(() => {
     const fetchChats = async () => {
-      if (!id) return;
+      if (!userId) return;
 
       setIsLoading(true);
       try {
-        const response = await OnetoOneChat.getChats(id);
-        setChats(response.data[0] || []);
+        const response = await OnetoOneChat.getChats(userId);
+        setChats(response.data || []);
+        console.log("chats",chats)
         setError(null);
-      } catch (error) {
+      } catch {
         setError("Couldn't load chats");
       } finally {
         setIsLoading(false);
@@ -62,38 +69,43 @@ const SideBar: React.FC<SideBarProps> = ({ onChatSelect }) => {
     };
 
     fetchChats();
-  }, [id]);
+  }, [userId]);
 
+  // Update the displayed list based on search term
   useEffect(() => {
     setDisplayList(searchTerm.trim() ? users : chats);
   }, [searchTerm, users, chats]);
 
-  const handleChatSelection = async (receiverId: string) => {
-    if (!id) return;
-  
+  // Handle chat selection or creation
+  const handleChatSelection = async (receiverId: any) => {
+    if (!userId) return;
+       console.log("reciever andy",receiverId)
     try {
       let chatId;
       if (searchTerm.trim()) {
-        // Creating new chat
-        const response = await OnetoOneChat.createChat([receiverId, id]);
+        const response = await OnetoOneChat.createChat([receiverId, userId]);
+        
         chatId = response.data._id;
-        const updatedChats = await OnetoOneChat.getChats(id);
-        setChats(updatedChats.data[0] || []);
+
+        const updatedChats = await OnetoOneChat.getChats(userId);
+        setChats(updatedChats.data || []);
       } else {
-        // For existing chats, we need to find the chat ID from the chat object
-        const chat = chats.find(chat => chat.user._id === receiverId);
+      
+        const chat = chats.find((chat) => chat.user._id === receiverId);
         chatId = chat?.chatId;
       }
-  
+
       if (chatId) {
         setActiveChat(chatId);
         onChatSelect(chatId);
         setSearchTerm("");
       }
-    } catch (error) {
+    } catch {
       setError("Couldn't create/select chat");
     }
   };
+
+  // Render the chat and user list
   const renderList = () => {
     if (isLoading) {
       return <div className="text-center text-gray-400">Loading...</div>;
@@ -122,8 +134,8 @@ const SideBar: React.FC<SideBarProps> = ({ onChatSelect }) => {
     }
 
     return displayList.map((item: IUserType | IChats, index: number) => {
-      const user = 'user' in item ? item.user : item;
-      const itemId = user._id
+      const user = "user" in item ? item.user : item;
+      const itemId = user._id;
       const isActive = itemId === activeChat;
 
       return (
@@ -132,7 +144,7 @@ const SideBar: React.FC<SideBarProps> = ({ onChatSelect }) => {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           className={`relative flex items-center p-4 rounded-lg cursor-pointer ${
-            isActive ? 'bg-gray-600' : 'bg-gray-700 hover:bg-gray-600'
+            isActive ? "bg-gray-600" : "bg-gray-700 hover:bg-gray-600"
           }`}
           onClick={() => handleChatSelection(itemId)}
         >
@@ -174,9 +186,7 @@ const SideBar: React.FC<SideBarProps> = ({ onChatSelect }) => {
           />
         </div>
 
-        <div className="flex-1 p-4 space-y-4 overflow-y-auto">
-          {renderList()}
-        </div>
+        <div className="flex-1 p-4 space-y-4 overflow-y-auto">{renderList()}</div>
 
         <motion.div
           whileHover={{ scale: 1.05 }}

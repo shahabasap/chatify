@@ -11,11 +11,14 @@ import IMessageSchema from "../types/schema/IMessageSchema";
       }
       
   async createMessage(data: any):Promise<IMessageSchema > {
-    return await this.model.create(data);
+    
+    const response= await this.model.create(data);
+    
+    return response
   }
 
   async populateMessage(message: any) {
-    return await message.populate("sender", "username avatar");
+    return await message.populate("senderId", "username avatar");
   }
 }
 export default MessageRepository

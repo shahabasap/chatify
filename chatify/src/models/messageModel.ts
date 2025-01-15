@@ -3,7 +3,7 @@ import IMessageSchema from "../types/schema/IMessageSchema";
 
 // models/Message.ts
 const messageSchema = new mongoose.Schema<IMessageSchema>({
-    sender: {
+    senderId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true
